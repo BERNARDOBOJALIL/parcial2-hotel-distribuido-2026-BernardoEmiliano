@@ -4,17 +4,17 @@
 
 ## Integrante 1
 
-- **Nombre completo:**
-- **Matrícula:**
-- **Correo:**
-- **Usuario de Git que va a usar para sus commits:**
+- **Nombre completo: Bernardo Bojalil Lorenzini**
+- **Matrícula: 195908**
+- **Correo: bernardo.bojalil@iberopuebla.mx**
+- **Usuario de Git que va a usar para sus commits: BERNARDOBOJALIL**
 
 ## Integrante 2
 
-- **Nombre completo:**
-- **Matrícula:**
-- **Correo:**
-- **Usuario de Git que va a usar para sus commits:**
+- **Nombre completo: Emiliano Montoya Velázquez**
+- **Matrícula: 197002**
+- **Correo: emiliano.montoya@iberopuebla.mx**
+- **Usuario de Git que va a usar para sus commits: MontoyaEmiliano**
 
 ---
 
