@@ -45,6 +45,7 @@ availability-service-1  | 2026-04-08 16:02:49,489 availability-service INFO Reci
 Cambié `auto_ack=True` a `auto_ack=false` en `basic_consume`, y moví el acknowledgement al final del callback de forma manual
 **¿Por qué?**
 Con `auto_ack=True` RabbitMQ elimina el mensaje de la cola en el momento en que lo entrega al consumer, Si crashea, el mensaje se pierde. Con ack manual, el mensaje solo se elimina cuando yo llamo `basic_ack`
+
 ---
 
 ### B6 — Credenciales en env vars
@@ -67,6 +68,7 @@ Para el TODO 1 declaré el exchange `hotel`, creé una queue llamada `notificati
 
 **Decisiones de diseño que tomé:**
 Usé una sola queue con dos bindings en lugar de dos queues separadas, porque ambos eventos (`payment.completed` y `payment.failed`) se manejan exactamente igual: solo se loggea la notificación. No tiene sentido hacerlo dos veces si la logica es igual. También hice lo mismo que en availability-service: `basic_ack` cuando el log se escribe bien, `basic_nack(requeue=True)` si hay excepción, para no perder mensajes si el servicio falla a la mitad.
+
 ---
 
 ## Bugs arreglados (Tier 2)
@@ -74,12 +76,14 @@ Usé una sola queue con dos bindings en lugar de dos queues separadas, porque am
 ### b4 - overlap de fechas
 **¿ Que hice?** Reemplacé el filtro `Booking.check_in == check_in` por dos condiciones:`Booking.check_in < check_out` y `Booking.check_out > check_in`
 **¿Por qué?** solo detectaba conflicto si otra reserva empezaba exactamente el mismo día, puse mejor que el primero empiece antes de que el segundo termine, y que el primero termine después de que el segundo empiece para que si ambas condiciones se dan, la habitación no esté disponible
+
 ---
 
 ### B5 — race condition con with_for_update()
 
 **¿Qué hice?** Agregué `.with_for_update()` a la query que busca reservas dentro de `find_available_room`
 **Por que?** si dos requests llegan al mismo tiempo ambos consumers pueden leer "no hay conflictos". Con `.with_for_update()` queda en espera hasta que el primero hace commit, y es cuando ya ve la habitación ocupada y rechaza la reserva.
+
 ---
 
 ### B7 — Idempotencia
