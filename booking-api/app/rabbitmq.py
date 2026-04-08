@@ -24,6 +24,6 @@ async def publish_booking(payload: dict) -> None:
             body=json.dumps(payload).encode(),
             content_type="application/json",
         )
-        # BUG: revisa el routing key. El availability-service espera otro nombre.
-        await exchange.publish(message, routing_key="booking.create")
+        # El availability service escucha requeste y aquí publicaba create
+        await exchange.publish(message, routing_key="booking.requested")
         logger.info("Evento publicado: booking_id=%s", payload.get("booking_id"))
