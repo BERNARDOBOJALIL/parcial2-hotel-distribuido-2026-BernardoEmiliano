@@ -51,6 +51,37 @@
 
 ### B7 — Idempotencia
 
+**Qué encontré:** Si RabbitMQ reentregaba el mismo `booking.confirmed`, el `payment-service` podía volver a cobrar porque no existía control de eventos ya procesados.
+
+**Cómo lo arreglé:** Agregué una tabla `processed_events` con `event_id` como llave primaria. Antes de cobrar, el servicio intenta registrar el `event_id`; si ya existe, detecta duplicado, lo loggea y no hace el cobro.
+
+**Por qué esto era un problema:** Sin idempotencia, un redelivery puede generar doble cobro
+
+**Comprobación:**
+
+```text
+❯ docker compose logs payment-service --tail=200
+payment-service-1  | 2026-04-08 17:14:15,861 payment-service INFO payment-service esperando booking.confirmed...
+payment-service-1  | 2026-04-08 17:16:35,804 payment-service INFO Recibido booking.confirmed: b7-booking-001
+payment-service-1  | 2026-04-08 17:16:36,163 payment-service INFO Pago COMPLETADO booking=b7-booking-001 monto=1500
+payment-service-1  | 2026-04-08 17:16:36,180 payment-service INFO Publicado payment.completed para b7-booking-001
+payment-service-1  | 2026-04-08 17:16:47,395 payment-service INFO Recibido booking.confirmed: b7-booking-001
+payment-service-1  | 2026-04-08 17:16:47,405 payment-service INFO Evento duplicado ignorado: event_id=evt-b7-001 booking_id=b7-booking-001
+❯ docker compose exec postgres psql -U hotel_user -d hotel_db -c \
+"SELECT booking_id, COUNT(*) FROM payments WHERE booking_id='b7-booking-001' GROUP BY booking_id;"
+	 booking_id   | count 
+----------------+-------
+ b7-booking-001 |     1
+(1 row)
+
+❯ docker compose exec postgres psql -U hotel_user -d hotel_db -c \
+"SELECT event_id, COUNT(*) FROM processed_events WHERE event_id='evt-b7-001' GROUP BY event_id;"
+	event_id  | count 
+------------+-------
+ evt-b7-001 |     1
+(1 row)
+```
+
 ---
 
 ## Bonus que implementé (si aplica)
