@@ -24,26 +24,20 @@ def find_available_room(room_type: str, check_in: date, check_out: date) -> Room
     with SessionLocal() as session:
         candidates = session.query(Room).filter(Room.room_type == room_type).all()
         for room in candidates:
-            # BUG: la lógica de overlap está incompleta. Solo compara check_in
-            # de las reservas existentes contra el check_in nuevo. Si una
-            # reserva existe del 1 al 10 y entra una nueva del 5 al 15,
-            # esta función dice "está libre" cuando NO lo está.
-            #
-            # Lo correcto: dos rangos [a1, a2] y [b1, b2] se solapan cuando
-            # a1 < b2 AND a2 > b1. Reescribe el filtro de abajo aplicando
-            # esa regla en SQL.
-            #
-            # BUG: además falta with_for_update() para prevenir race condition.
-            # Si dos consumers leen al mismo tiempo, ambos pueden ver la
-            # habitación libre y ambos insertan una reserva. El patrón correcto
-            # es bloquear las filas relevantes dentro de la transacción.
+            # correccion 1:
+            # había que poner dos rangos (check_in, check_out) para detectar cualquier solapamiento 
+            # no solo comparar entre check in coo hacía antes para que cuando uno termine pueda iniciar el otro
+            # correccion 2:
+            # con with_for_update() bloqueamos las filas de reservas que podrían solaparse
             conflicts = (
                 session.query(Booking)
                 .filter(
                     Booking.room_id == room.id,
                     Booking.status == "CONFIRMED",
-                    Booking.check_in == check_in,  # ← incompleto
+                    Booking.check_in < check_out,
+                    Booking.check_out > check_in,
                 )
+                .with_for_update()  # bloquea las reservas que podrían duplicarse
                 .all()
             )
             if not conflicts:
@@ -98,8 +92,12 @@ def callback(ch, method, properties, body):
             properties=pika.BasicProperties(content_type="application/json"),
         )
         logger.info("Publicado %s para %s", routing_key, booking_id)
-    except Exception as exc:
-        logger.error("Error procesando %s: %s", booking_id, exc)
+        ch.basic_ack(delivery_tag=method.delivery_tag)
+    except Exception as e:
+        logger.error("Error procesando %s: %s", booking_id, str(e))
+        #correccion 3: requeue=True para que RabbitMQ reencole el mensaje
+        # y no se pierda si el servicio crashea
+        ch.basic_nack(delivery_tag=method.delivery_tag, requeue=True)
 
 
 def main() -> None:
@@ -111,14 +109,11 @@ def main() -> None:
     result = channel.queue_declare(queue="availability.requests", durable=False)
     channel.queue_bind(exchange="hotel", queue=result.method.queue, routing_key="booking.requested")
 
-    # BUG: ack incorrecto. Con auto_ack=True, RabbitMQ marca el mensaje como
-    # entregado ANTES de que el callback corra. Si crashea a la mitad, el
-    # mensaje se pierde. Cambia a auto_ack=False y haz ch.basic_ack(delivery_tag=...)
-    # manualmente al final del callback (o basic_nack en caso de error).
+    # corrección 3: auto_ack=False para usar ack manual en el callback
     channel.basic_consume(
         queue=result.method.queue,
         on_message_callback=callback,
-        auto_ack=True,
+        auto_ack=False,
     )
     logger.info("availability-service esperando booking.requested...")
     channel.start_consuming()
