@@ -9,8 +9,9 @@ import os
 import random
 
 import aio_pika
+from sqlalchemy.exc import IntegrityError
 
-from .db import Payment, SessionLocal, init_db
+from .db import Payment, ProcessedEvent, SessionLocal, init_db
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
 logger = logging.getLogger("payment-service")
@@ -27,20 +28,28 @@ async def charge_payment(payload: dict) -> tuple[bool, str]:
         return False, "Tarjeta rechazada por el banco simulado"
     return True, ""
 
+# Se corrigió el bug de idempotencia en payment-service para evitar cobros duplicados cuando RabbitMQ 
+# redelivery el mismo evento. Se agregó la tabla 
+# processed_events con event_id como llave primaria en db.py, y en main.py ahora se intenta 
+# registrar el evento antes de cobrar.
 
-async def process_event(payload: dict) -> tuple[bool, str]:
+async def process_event(payload: dict) -> tuple[bool | None, str]:
     booking_id = payload["booking_id"]
     room_type = payload["room_type"]
+    event_id = payload.get("event_id", booking_id)
     amount = PRICE_BY_TYPE.get(room_type, 1000)
 
-    # BUG: falta idempotencia. Si RabbitMQ reentrega este mismo evento (porque
-    # el consumer crasheó después de cobrar pero antes de hacer ack), vamos a
-    # cobrar dos veces. Necesitas chequear si el booking_id ya fue procesado
-    # antes de cobrar. Una opción simple: una tabla processed_events(event_id PK)
-    # y tratar de insertarlo al inicio; si ya existe, saltar el cobro.
-    success, reason = await charge_payment(payload)
-
     async with SessionLocal() as session:
+        try:
+            session.add(ProcessedEvent(event_id=event_id))
+            await session.flush()
+        except IntegrityError:
+            await session.rollback()
+            logger.info("Evento duplicado ignorado: event_id=%s booking_id=%s", event_id, booking_id)
+            return None, "DUPLICATE_EVENT"
+
+        success, reason = await charge_payment(payload)
+
         session.add(
             Payment(
                 booking_id=booking_id,
@@ -65,6 +74,8 @@ async def callback(message: aio_pika.IncomingMessage) -> None:
         logger.info("Recibido booking.confirmed: %s", booking_id)
 
         success, reason = await process_event(payload)
+        if success is None:
+            return
 
         connection = await aio_pika.connect_robust(RABBITMQ_URL)
         async with connection:
