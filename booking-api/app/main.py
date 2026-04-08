@@ -45,12 +45,18 @@ async def create_booking(body: BookingIn):
         "check_out": body.check_out.isoformat(),
     }
 
-    # BUG: maneja el fallo del publish. Si RabbitMQ está caído, el cliente
-    # recibe un 202 OK aunque el evento nunca salió. Debes envolver esto en
-    # try/except, loggear el error, y devolver 503 al cliente.
-    await publish_booking(payload)
+    # Bug arreglado al encapsular publish en try/except/finally para devolver 503 y asegurar queya se cerró Redis
+    try:
+        await publish_booking(payload)
+    except Exception:
+        logger.exception("Error publicando booking.requested para booking_id=%s", booking_id)
+        raise HTTPException(
+            status_code=503,
+            detail="Servicio de reservas no disponible. Intenta de nuevo más tarde :( )",
+        )
+    finally:
+        await r.aclose()
 
-    await r.aclose()
     return BookingCreated(booking_id=booking_id, status="REQUESTED")
 
 

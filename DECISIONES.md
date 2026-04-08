@@ -25,6 +25,18 @@ availability-service-1  | 2026-04-08 16:02:49,489 availability-service INFO Reci
 
 ### B2 — Manejo de error en publish
 
+**Qué encontré:** El endpoint de creación de reservas no manejaba el error del publish a RabbitMQ. Si el broker fallaba, no se devolvía algo que dijera que no estaba disponible.
+
+**Cómo lo arreglé:** Envolví `await publish_booking(payload)` en `try/except`, registré el error en logs y devolví `HTTP 503 Service Unavailable`
+
+**Por qué esto era un problema:** El cliente podía interpretar que la reserva quedó aceptada cuando en realidad el evento ni siquiera se publicó. Con 503 comunicamos que algo falló.
+
+**Comprobación:** Con RabbitMQ apagado (`docker compose stop rabbitmq`), al hacer `POST /bookings` el API respondió:
+
+```json
+{"detail":"Servicio de reservas no disponible. Intenta de nuevo más tarde :( )"}
+```
+
 ---
 
 ### B3 — Ack manual
