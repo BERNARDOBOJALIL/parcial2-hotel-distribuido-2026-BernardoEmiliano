@@ -25,6 +25,12 @@
 
 ### B6 — Credenciales en env vars
 
+**Qué encontré:** La conexión de `payment-service` a Postgres tenía usuario, password, host y base de datos escritos directamente en el código.
+
+**Cómo lo arreglé:** Reemplacé la URL por una `DATABASE_URL` construida con `os.getenv(...)` usando `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_HOST` y `POSTGRES_PORT`.
+
+**Por qué esto era un problema:** Con los valores en el código no se puede cambiar configuración por ambiente y además se exponen credenciales y las podrían robar.
+
 ---
 
 ## notification-service completado
