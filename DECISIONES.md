@@ -123,6 +123,23 @@ payment-service-1  | 2026-04-08 17:16:47,405 payment-service INFO Evento duplica
 
 ## Bonus que implementé (si aplica)
 
+### Saga compensatoria
+
+**Qué quité y qué puse:**
+- **En `payment-service`** antes solo se publicaba `payment.completed` o `payment.failed`; **agregué** la publicación de `booking.cancelled` cuando el pago falla.
+- **En `availability-service`** antes la cola solo escuchaba `booking.requested`; **agregué** un segundo binding a `booking.cancelled` y una función de compensación que cambia el estado de la reserva de `CONFIRMED` a `CANCELLED`.
+- En el callback de availability **separé el flujo por `routing_key`** para no mezclar la lógica de confirmación normal con la lógica de compensación.
+
+**Por qué lo hice así:** El fallo de pago no debe dejar inventario bloqueado. Con este evento de compensación desacoplado, cada servicio mantiene su responsabilidad y el estado final queda consistente.
+
+**Comprobación (logs):**
+
+```text
+payment-service-1       | 2026-04-09 04:29:57,510 payment-service INFO Publicado payment.failed para 4fbdc765-6f17-49ad-a5cc-3e4ffadd2e52
+payment-service-1       | 2026-04-09 04:29:57,514 payment-service INFO Publicado booking.cancelled para 4fbdc765-6f17-49ad-a5cc-3e4ffadd2e52
+availability-service-1  | 2026-04-09 04:29:57,533 availability-service INFO Reserva 4fbdc765-6f17-49ad-a5cc-3e4ffadd2e52 marcada como CANCELLED
+```
+
 ---
 
 ## Cosas que decidí NO hacer

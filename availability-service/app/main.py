@@ -71,27 +71,61 @@ def process_booking(payload: dict) -> tuple[bool, str, int | None]:
         return True, "", room.id
 
 
+def apply_cancellation_compensation(payload: dict) -> bool:
+    booking_id = payload["booking_id"]
+    with SessionLocal() as session:
+        # La compensación solo aplica a reservas activas (CONFIRMED).
+        # Si ya estaba cancelada/rechazada, no hay nada que liberar.
+        booking = (
+            session.query(Booking)
+            .filter(
+                Booking.booking_id == booking_id,
+                Booking.status == "CONFIRMED",
+            )
+            .first()
+        )
+        if booking is None:
+            # Registramos este caso para trazabilidad de saga.
+            logger.warning("No se encontró reserva confirmada para cancelar: %s", booking_id)
+            return False
+
+        # Marcamos estado CANCELLED para liberar disponibilidad.
+        booking.status = "CANCELLED"
+        session.commit()
+        # El commit garantiza persistencia antes de ackear el mensaje.
+        logger.info("Reserva %s marcada como CANCELLED", booking_id)
+        return True
+
+
 def callback(ch, method, properties, body):
     payload = json.loads(body)
+    routing_key = method.routing_key
     booking_id = payload["booking_id"]
-    logger.info("Recibido booking.requested: %s", booking_id)
+    logger.info("Recibido %s: %s", routing_key, booking_id)
 
     try:
-        success, reason, room_id = process_booking(payload)
-        if success:
-            event = {**payload, "event": "BOOKING_CONFIRMED", "room_id": room_id}
-            routing_key = "booking.confirmed"
-        else:
-            event = {**payload, "event": "BOOKING_REJECTED", "reason": reason}
-            routing_key = "booking.rejected"
+        if routing_key == "booking.requested":
+            success, reason, room_id = process_booking(payload)
+            if success:
+                event = {**payload, "event": "BOOKING_CONFIRMED", "room_id": room_id}
+                publish_key = "booking.confirmed"
+            else:
+                event = {**payload, "event": "BOOKING_REJECTED", "reason": reason}
+                publish_key = "booking.rejected"
 
-        ch.basic_publish(
-            exchange="hotel",
-            routing_key=routing_key,
-            body=json.dumps(event).encode(),
-            properties=pika.BasicProperties(content_type="application/json"),
-        )
-        logger.info("Publicado %s para %s", routing_key, booking_id)
+            ch.basic_publish(
+                exchange="hotel",
+                routing_key=publish_key,
+                body=json.dumps(event).encode(),
+                properties=pika.BasicProperties(content_type="application/json"),
+            )
+            logger.info("Publicado %s para %s", publish_key, booking_id)
+        elif routing_key == "booking.cancelled":
+            # Evento de compensación emitido por payment-service.
+            apply_cancellation_compensation(payload)
+        else:
+            logger.warning("Routing key no soportado en availability-service: %s", routing_key)
+
         ch.basic_ack(delivery_tag=method.delivery_tag)
     except Exception as e:
         logger.error("Error procesando %s: %s", booking_id, str(e))
@@ -108,6 +142,8 @@ def main() -> None:
     channel.exchange_declare(exchange="hotel", exchange_type="topic")
     result = channel.queue_declare(queue="availability.requests", durable=False)
     channel.queue_bind(exchange="hotel", queue=result.method.queue, routing_key="booking.requested")
+    # Se escucha también la compensación para liberar reservas tras payment.failed.
+    channel.queue_bind(exchange="hotel", queue=result.method.queue, routing_key="booking.cancelled")
 
     # corrección 3: auto_ack=False para usar ack manual en el callback
     channel.basic_consume(
@@ -115,7 +151,7 @@ def main() -> None:
         on_message_callback=callback,
         auto_ack=False,
     )
-    logger.info("availability-service esperando booking.requested...")
+    logger.info("availability-service esperando booking.requested / booking.cancelled...")
     channel.start_consuming()
 
 

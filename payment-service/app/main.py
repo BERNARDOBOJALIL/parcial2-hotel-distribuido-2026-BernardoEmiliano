@@ -28,11 +28,6 @@ async def charge_payment(payload: dict) -> tuple[bool, str]:
         return False, "Tarjeta rechazada por el banco simulado"
     return True, ""
 
-# Se corrigió el bug de idempotencia en payment-service para evitar cobros duplicados cuando RabbitMQ 
-# redelivery el mismo evento. Se agregó la tabla 
-# processed_events con event_id como llave primaria en db.py, y en main.py ahora se intenta 
-# registrar el evento antes de cobrar.
-
 async def process_event(payload: dict) -> tuple[bool | None, str]:
     booking_id = payload["booking_id"]
     room_type = payload["room_type"]
@@ -92,6 +87,22 @@ async def callback(message: aio_pika.IncomingMessage) -> None:
                 routing_key=routing_key,
             )
             logger.info("Publicado %s para %s", routing_key, booking_id)
+
+            if not success:
+                # Saga compensatoria: si el pago falla, se libera la reserva.
+                cancelled_event = {
+                    **payload,
+                    "event": "BOOKING_CANCELLED",
+                    "reason": reason,
+                }
+                await exchange.publish(
+                    aio_pika.Message(
+                        body=json.dumps(cancelled_event).encode(),
+                        content_type="application/json",
+                    ),
+                    routing_key="booking.cancelled",
+                )
+                logger.info("Publicado booking.cancelled para %s", booking_id)
 
 
 async def main() -> None:
