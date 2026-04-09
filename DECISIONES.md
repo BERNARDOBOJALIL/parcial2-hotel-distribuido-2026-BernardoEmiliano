@@ -135,9 +135,24 @@ payment-service-1  | 2026-04-08 17:16:47,405 payment-service INFO Evento duplica
 **Comprobación (logs):**
 
 ```text
-payment-service-1       | 2026-04-09 04:29:57,510 payment-service INFO Publicado payment.failed para 4fbdc765-6f17-49ad-a5cc-3e4ffadd2e52
-payment-service-1       | 2026-04-09 04:29:57,514 payment-service INFO Publicado booking.cancelled para 4fbdc765-6f17-49ad-a5cc-3e4ffadd2e52
-availability-service-1  | 2026-04-09 04:29:57,533 availability-service INFO Reserva 4fbdc765-6f17-49ad-a5cc-3e4ffadd2e52 marcada como CANCELLED
+❯ for i in $(seq 1 15); do
+	d=$(printf "%02d" $i)
+	d2=$(printf "%02d" $((i+1)))
+	curl -s -X POST http://localhost:8000/bookings \
+		-H "Content-Type: application/json" \
+		-d "{\"guest\":\"Saga Test $i\",\"room_type\":\"single\",\"check_in\":\"2026-11-$d\",\"check_out\":\"2026-11-$d2\"}" >/dev/null
+done
+❯ docker compose logs --tail=400 payment-service availability-service | \
+pipe> 
+pipe> grep -E "Pago FALLIDO|Publicado payment.failed|Publicado booking.cancelled|marcada como CANCELLED"
+availability-service-1  | 2026-04-09 21:58:37,943 availability-service INFO Reserva 6718f291-76f5-44d1-a8b6-6faa6089fd0a marcada como CANCELLED
+availability-service-1  | 2026-04-09 21:58:38,202 availability-service INFO Reserva 6b9b1c09-f6d5-4014-bdb9-2900fbe7afd3 marcada como CANCELLED
+payment-service-1       | 2026-04-09 21:58:37,876 payment-service WARNING Pago FALLIDO booking=6718f291-76f5-44d1-a8b6-6faa6089fd0a motivo=Tarjeta rechazada por el banco simulado
+payment-service-1       | 2026-04-09 21:58:37,923 payment-service INFO Publicado payment.failed para 6718f291-76f5-44d1-a8b6-6faa6089fd0a
+payment-service-1       | 2026-04-09 21:58:37,926 payment-service INFO Publicado booking.cancelled para 6718f291-76f5-44d1-a8b6-6faa6089fd0a
+payment-service-1       | 2026-04-09 21:58:38,145 payment-service WARNING Pago FALLIDO booking=6b9b1c09-f6d5-4014-bdb9-2900fbe7afd3 motivo=Tarjeta rechazada por el banco simulado
+payment-service-1       | 2026-04-09 21:58:38,171 payment-service INFO Publicado payment.failed para 6b9b1c09-f6d5-4014-bdb9-2900fbe7afd3
+payment-service-1       | 2026-04-09 21:58:38,176 payment-service INFO Publicado booking.cancelled para 6b9b1c09-f6d5-4014-bdb9-2900fbe7afd3
 ```
 
 ---
