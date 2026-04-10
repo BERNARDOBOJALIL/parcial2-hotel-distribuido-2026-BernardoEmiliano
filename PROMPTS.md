@@ -6,12 +6,12 @@
 
 ## ¿Usaron IA?
 
-- [ ] Sí
+- [x] Sí
 - [ ] No
 
 ## ¿Quién la usó?
 
-- [ ] Integrante 1
+- [x] Integrante 1 (Bernardo Bojalil)
 - [ ] Integrante 2
 - [ ] Ambos
 
@@ -20,33 +20,78 @@
 ## Si la respuesta es "Sí":
 
 ### Herramientas usadas
-(Ej: Claude.ai, ChatGPT-4, GitHub Copilot, Cursor, etc.)
 
--
+- ChatGPT
+- GitHub Copilot
 
 ### Prompts principales
-Listen los 3-5 prompts más importantes que escribieron y para qué los usaron.
 
-1. **Prompt:** ...
-   **Para qué:** ...
-   **Quién lo usó:** Integrante 1 / Integrante 2
-   **Qué tan útil fue:** (1-5)
+#### ChatGPT
 
-2. **Prompt:** ...
-   **Para qué:** ...
-   **Quién lo usó:** Integrante 1 / Integrante 2
-   **Qué tan útil fue:** (1-5)
+1. **Prompt:** "cómo le cambio el nombre a una rama en Git?"
+   **Para qué:** Consulta rápida de sintaxis para renombrar ramas locales y remotas sin romper el historial.
+   **Quién lo usó:** Bernardo Bojalil
+   **Qué tan útil fue:** 4/5
+
+2. **Prompt:** "ahora tengo que cambiarle de nombre a unos commits, ¿se puede cambiar el nombre de commits pasados?"
+   **Para qué:** Saber si era posible editar mensajes de commits ya pusheados usando interactive rebase.
+   **Quién lo usó:** Bernardo Bojalil
+   **Qué tan útil fue:** 3/5
+
+3. **Prompt:** "Tengo este trabajo que tengo que resolver. Empezaremos por el Tier 1. Me dividí con mi compañero los bugs del Tier 1 dos y dos. ¿Cómo deberíamos hacer el GitHub? ¿Una rama por bug?" *(+ README de instrucciones adjunto)*
+   **Para qué:** Definir la estrategia de ramas antes de empezar. La respuesta fue la estructura que terminamos usando: una rama por servicio (`booking-api`, `availability-core`, `payment-core`, `feature/Notifications`, `Tier3-Bonus`) para que cada quien viviera en la suya y los merges a `main` fueran limpios.
+   **Quién lo usó:** Bernardo Bojalil
+   **Qué tan útil fue:** 5/5
+
+#### GitHub Copilot
+
+1. **Prompt:** Explícame qué hace `with_for_update()`
+   **Para qué:** Entender bien cómo funciona el bloqueo de filas en `availability-service`.
+   **Quién lo usó:** Bernardo Bojalil
+   **Qué tan útil fue:** 5/5
+
+2. **Prompt:** Explícame paso a paso cómo funciona el `notification-service` completo.
+   **Para qué:** Entender el flujo del consumer, los bindings y cómo debía quedar el log.
+   **Quién lo usó:** Bernardo Bojalil
+   **Qué tan útil fue:** 5/5
+
+3. **Prompt:** Explícame cómo leer los logs para comprobar el flujo end-to-end.
+   **Para qué:** Saber qué líneas buscar en `booking-api`, `availability-service`, `payment-service` y `notification-service`.
+   **Quién lo usó:** Bernardo Bojalil
+   **Qué tan útil fue:** 5/5
+
+4. **Prompt:** "Corrí un loop de 15 reservas seguidas y en los logs veo que algunos pagos salen como FALLIDO y después aparece `marcada como CANCELLED` en availability-service.significa que la saga compensatoria está funcionando bien o debería ver algo más?"
+   **Para qué:** Confirmar que el flujo de compensación estaba completo: payment publica `booking.cancelled` y availability lo recibe y actualiza el estado.
+   **Quién lo usó:** Bernardo Bojalil
+   **Qué tan útil fue:** 4/5
+
+5. **Prompt:** "availability-service saca `Recibido booking.requested` pero después no aparece nada más, ni confirmación ni error. El estado en la base sigue en PENDING. que pasa?
+   **Para qué:** Entender por qué el consumer recibía el evento pero el flujo se cortaba silenciosamente antes de actualizar la reserva.
+   **Quién lo usó:** Bernardo Bojalil
+   **Qué tan útil fue:** 5/5
+
+6. **Prompt:** "En los logs de payment-service el mismo booking_id aparece dos veces: la primera  `Pago COMPLETADO`, la segunda  no loggea absolutamente nada. sí está detectando el duplicado o se está tragando el mensaje sin procesarlo?"
+   **Para qué:** Verificar que `processed_events` estaba rechazando el redelivery correctamente y que no era un bug silencioso.
+   **Quién lo usó:** Bernardo Bojalil
+   **Qué tan útil fue:** 4/5
+
+---
 
 ### ¿En qué partes los apoyó?
-(Ej: explicación de `with_for_update()`, generación de boilerplate del notification-service, debugging de un error de aio-pika...)
 
--
+- Definición de la estrategia de ramas del repo para trabajar en paralelo sin conflictos.
+- Dudas puntuales de sintaxis de Git.
+- Entender `with_for_update()` y el bloqueo de filas para evitar race conditions.
+- Seguir el flujo completo de `notification-service` y el sentido de los bindings.
+- Interpretar logs para confirmar que todo estaba funcionando correctamente.
 
 ### ¿Hubo cosas en las que la IA dio respuestas incorrectas o que tuvieron que corregir?
-(Ser honestos aquí suma puntos de criterio)
 
--
+- En los prompts de interpretación de logs, las primeras respuestas asumían configuraciones que no teníamos (como múltiples consumers o retry policies), así que tuvimos que dar más contexto.
+- Algunos ejemplos de código usaban nombres de variables que no coincidían con el repo y los ajustamos a mano.
 
 ### ¿Qué decidieron hacer manualmente sin IA y por qué?
 
--
+- El código de todos los bugs se escribió a mano tomando como base los ejemplos vistos en clase, sin pedirle a la IA que generara ni completara código. La IA solo se usó para entender conceptos antes de implementarlos.
+- La validación final con Docker y las capturas de evidencia las hicimos nosotros para confirmar que el sistema funcionaba de punta a punta.
+- La lógica de la saga compensatoria y la tabla de idempotencia las implementamos nosotros; la IA solo nos ayudó a entender el patrón, no a escribir el código.
