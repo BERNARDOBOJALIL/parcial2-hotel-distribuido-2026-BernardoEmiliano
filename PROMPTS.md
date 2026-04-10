@@ -11,9 +11,9 @@
 
 ## ¿Quién la usó?
 
-- [x] Integrante 1 (Bernardo Bojalil)
-- [x] Integrante 2 (Emiliano Montoya)
-- [ ] Ambos
+- [ ] Integrante 1 (Bernardo Bojalil)
+- [ ] Integrante 2 (Emiliano Montoya)
+- [x] Ambos
 
 ---
 
