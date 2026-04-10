@@ -155,12 +155,59 @@ payment-service-1       | 2026-04-09 21:58:38,171 payment-service INFO Publicado
 payment-service-1       | 2026-04-09 21:58:38,176 payment-service INFO Publicado booking.cancelled para 6b9b1c09-f6d5-4014-bdb9-2900fbe7afd3
 ```
 
+### Tests
+
+**Qué probé:** La lógica de overlap de fechas con 6 casos distintos, y la función de compensación `apply_cancellation_compensation` con 2 casos.
+
+**Casos de overlap probados:**
+- Reservas consecutivas (back-to-back) — no deben solaparse
+- Solapamiento parcial por el inicio
+- Solapamiento parcial por el fin
+- Rango completamente contenido dentro de otro
+- Mismo rango exacto
+- Rango completamente anterior — no deben solaparse
+
+**Casos de compensación probados:**
+- Reserva confirmada encontrada — debe marcarse como `CANCELLED` y retornar `True`
+- Reserva no encontrada — debe retornar `False` sin romper
+
+**Por qué esas funciones:** Son las dos funciones puras más críticas del sistema. El overlap es el corazón de la validación de disponibilidad, y la compensación es la pieza que garantiza consistencia cuando un pago falla. Si alguna de las dos falla silenciosamente, el sistema queda en un estado corrupto sin ningún error visible.
+
+**Cómo correr los tests:**
+```bash
+cd availability-service
+pip install pytest
+pytest tests/ -v
+```
+
+**Resultado obtenido:**
+
+================================================= test session starts =================================================
+platform win32 -- Python 3.13.1, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\emili\AppData\Local\Programs\Python\Python313\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\emili\OneDrive\Escritorio\ExamenRafa2\parcial2-hotel-distribuido-2026-BernardoEmiliano\availability_service
+plugins: anyio-4.12.0, langsmith-0.4.32
+collected 8 items
+
+tests/test_availability.py::TestOverlapLogic::test_sin_solapamiento_consecutivo PASSED                           [ 12%]
+tests/test_availability.py::TestOverlapLogic::test_solapamiento_parcial_inicio PASSED                            [ 25%]
+tests/test_availability.py::TestOverlapLogic::test_solapamiento_parcial_fin PASSED                               [ 37%]
+tests/test_availability.py::TestOverlapLogic::test_solapamiento_contenido PASSED                                 [ 50%]
+tests/test_availability.py::TestOverlapLogic::test_mismo_rango_exacto PASSED                                     [ 62%]
+tests/test_availability.py::TestOverlapLogic::test_sin_solapamiento_antes PASSED                                 [ 75%]
+tests/test_availability.py::TestCancellationCompensation::test_cancela_reserva_confirmada PASSED                 [ 87%]
+tests/test_availability.py::TestCancellationCompensation::test_no_encuentra_reserva PASSED                       [100%]
+
 ---
 
 ## Cosas que decidí NO hacer
 
-(Ej: "no agregué tests porque preferí enfocarme en el flujo end-to-end", "no implementé saga porque no me dio tiempo", etc.)
+Hicimos todo pero, podriamos agregar mas detallados los test y mas extensos pero nos faltó tiempo.
 
 ---
 
 ## Si tuviera más tiempo, lo siguiente que mejoraría sería:
+
+- Un front que permita visualizar mejor las funciones
+- hacer los datos de las colas durables para producción
+- 
