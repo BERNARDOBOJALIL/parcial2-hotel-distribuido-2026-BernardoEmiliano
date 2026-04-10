@@ -12,7 +12,7 @@
 ## ¿Quién la usó?
 
 - [x] Integrante 1 (Bernardo Bojalil)
-- [ ] Integrante 2
+- [x] Integrante 2 (Emiliano Montoya)
 - [ ] Ambos
 
 ---
@@ -23,6 +23,7 @@
 
 - ChatGPT
 - GitHub Copilot
+- Claude
 
 ### Prompts principales
 
@@ -75,6 +76,34 @@
    **Quién lo usó:** Bernardo Bojalil
    **Qué tan útil fue:** 4/5
 
+
+### Claude.ai
+
+1. **Prompt:** "Ademas de cambiar mi auto_ack a false, que mas me ayudaría?" *(+ archivo main.py de availability-service adjunto)*
+   **Para qué:** Identificar y corregir el bug B3 de `auto_ack=True` en RabbitMQ, cambiando a ack manual con `basic_ack` y `basic_nack(requeue=True)` para evitar pérdida de mensajes si el servicio crashea.
+   **Quién lo usó:** Emiliano Montoya Velazquez
+   **Qué tan útil fue:** 5/5
+
+2. **Prompt:** "necesito hacer un pytest, explicame como funcionan*
+   **Para qué:** Para yo poder generar los tests con pytest para la lógica de overlap 
+   **Quién lo usó:** Emiliano Montoya Velazquez
+   **Qué tan útil fue:** 3/5
+
+3. **Prompt:** "qué hace `with_for_update()` en SQLAlchemy?"
+   **Para qué:** Comprender cómo el `SELECT FOR UPDATE` bloquea filas dentro de una transacción para que dos consumers simultáneos no puedan confirmar la misma habitación al mismo tiempo.
+   **Quién lo usó:** Emiliano Montoya Velazquez
+   **Qué tan útil fue:** 4/5   
+
+4. **Prompt:** "¿qué diferencia hay entre hacer dos queues separadas y una sola queue con dos bindings en RabbitMQ?"
+    **Para qué:** Decidir la arquitectura del notification-service: entender que si el comportamiento ante `payment.completed` y `payment.failed` es el mismo, una sola queue con dos bindings es más simple y evita duplicar consumers innecesariamente.
+    **Quién lo usó:** Emiliano Montoya Velazquez
+    **Qué tan útil fue:** 5/5
+
+5. **Prompt:** "¿cómo agrego healthchecks a servicios en docker-compose y qué comando uso para cada tipo de servicio?"
+    **Para qué:** Entender la diferencia entre healthchecks de HTTP, de base de datos, de Redis y de RabbitMQ, y cómo configurar `interval` y `retries` para que los servicios dependientes esperen a que sus dependencias estén listas.
+    **Quién lo usó:** Emiliano Montoya Velazquez
+    **Qué tan útil fue:** 5/5
+
 ---
 
 ### ¿En qué partes los apoyó?
@@ -84,6 +113,7 @@
 - Entender `with_for_update()` y el bloqueo de filas para evitar race conditions.
 - Seguir el flujo completo de `notification-service` y el sentido de los bindings.
 - Interpretar logs para confirmar que todo estaba funcionando correctamente.
+- Explicar como funciona un pytest.
 
 ### ¿Hubo cosas en las que la IA dio respuestas incorrectas o que tuvieron que corregir?
 
