@@ -7,11 +7,10 @@
 ## Bugs arreglados (Tier 1)
 
 ### B1 — Routing key
+
 **Qué encontré:** El publisher de `booking-api` enviaba el evento con un routing key distinto al que consumía `availability-service`, así que el mensaje llegaba al exchange pero no había ninguna cola que esperara esos mensajes.
 
 **Cómo lo arreglé:** Cambié el routing key de publicación a `booking.requested`, que es el mismo valor que usa el consumer.
-
-
 
 **Por qué esto era un problema:** En un exchange de tipo `topic`, si no coincide con el binding, el mensaje queda sin destinatario.
 
@@ -27,7 +26,7 @@ availability-service-1  | 2026-04-08 16:02:49,489 availability-service INFO Reci
 
 **Qué encontré:** El endpoint de creación de reservas no manejaba el error del publish a RabbitMQ. Si el broker fallaba, no se devolvía algo que dijera que no estaba disponible.
 
-**Cómo lo arreglé:** Envolví `await publish_booking(payload)` en `try/except`, registré el error en logs y devolví `HTTP 503 Service Unavailable`
+**Cómo lo arreglé:** Envolví `await publish_booking(payload)` en `try/except`, registré el error en logs y devolví `HTTP 503 Service Unavailable`.
 
 **Por qué esto era un problema:** El cliente podía interpretar que la reserva quedó aceptada cuando en realidad el evento ni siquiera se publicó. Con 503 comunicamos que algo falló.
 
@@ -41,10 +40,11 @@ availability-service-1  | 2026-04-08 16:02:49,489 availability-service INFO Reci
 
 ### B3 — Ack manual
 
-**¿Qué hice?**
-Cambié `auto_ack=True` a `auto_ack=false` en `basic_consume`, y moví el acknowledgement al final del callback de forma manual
-**¿Por qué?**
-Con `auto_ack=True` RabbitMQ elimina el mensaje de la cola en el momento en que lo entrega al consumer, Si crashea, el mensaje se pierde. Con ack manual, el mensaje solo se elimina cuando yo llamo `basic_ack`
+**Qué encontré:** El consumer de `availability-service` tenía `auto_ack=True`, lo que significa que RabbitMQ eliminaba el mensaje en el momento de entregarlo, antes de que se procesara.
+
+**Cómo lo arreglé:** Cambié `auto_ack=True` a `auto_ack=False` en `basic_consume` y moví el acknowledgement al final del callback de forma manual.
+
+**Por qué esto era un problema:** Si el servicio crasheaba después de recibir el mensaje pero antes de procesarlo, el mensaje se perdía para siempre. Con ack manual, el mensaje solo se elimina de la cola cuando se llama `basic_ack`, garantizando que se procesó correctamente.
 
 ---
 
@@ -54,7 +54,7 @@ Con `auto_ack=True` RabbitMQ elimina el mensaje de la cola en el momento en que 
 
 **Cómo lo arreglé:** Reemplacé la URL por una `DATABASE_URL` construida con `os.getenv(...)` usando `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_HOST` y `POSTGRES_PORT`.
 
-**Por qué esto era un problema:** Con los valores en el código no se puede cambiar configuración por ambiente y además se exponen credenciales y las podrían robar.
+**Por qué esto era un problema:** Con los valores en el código no se puede cambiar configuración por ambiente y además se exponen credenciales en el repositorio.
 
 ---
 
@@ -67,22 +67,29 @@ El skeleton tenía tres TODOs: declarar el exchange y bindear la queue a los rou
 Para el TODO 1 declaré el exchange `hotel`, creé una queue llamada `notifications` y le hice dos bindings: uno para `payment.completed` y otro para `payment.failed`, de modo que una sola queue reciba los dos. Para el TODO 2 implementé el callback que parsea el JSON, extrae `booking_id`, `event` y `guest`, y loggea con el formato que dice ahí. Para el TODO 3 arranqué el consumer con `auto_ack=False` y `start_consuming()`, eliminando el loop falso del skeleton.
 
 **Decisiones de diseño que tomé:**
-Usé una sola queue con dos bindings en lugar de dos queues separadas, porque ambos eventos (`payment.completed` y `payment.failed`) se manejan exactamente igual: solo se loggea la notificación. No tiene sentido hacerlo dos veces si la logica es igual. También hice lo mismo que en availability-service: `basic_ack` cuando el log se escribe bien, `basic_nack(requeue=True)` si hay excepción, para no perder mensajes si el servicio falla a la mitad.
+Usé una sola queue con dos bindings en lugar de dos queues separadas, porque ambos eventos (`payment.completed` y `payment.failed`) se manejan exactamente igual: solo se loggea la notificación. No tiene sentido duplicar la lógica si es idéntica. También hice lo mismo que en `availability-service`: `basic_ack` cuando el log se escribe bien, `basic_nack(requeue=True)` si hay excepción, para no perder mensajes si el servicio falla a la mitad.
 
 ---
 
 ## Bugs arreglados (Tier 2)
 
-### b4 - overlap de fechas
-**¿ Que hice?** Reemplacé el filtro `Booking.check_in == check_in` por dos condiciones:`Booking.check_in < check_out` y `Booking.check_out > check_in`
-**¿Por qué?** solo detectaba conflicto si otra reserva empezaba exactamente el mismo día, puse mejor que el primero empiece antes de que el segundo termine, y que el primero termine después de que el segundo empiece para que si ambas condiciones se dan, la habitación no esté disponible
+### B4 — Overlap de fechas
+
+**Qué encontré:** La query que verificaba disponibilidad solo detectaba conflicto si otra reserva empezaba exactamente el mismo día, ignorando todos los demás casos de solapamiento.
+
+**Cómo lo arreglé:** Reemplacé el filtro `Booking.check_in == check_in` por dos condiciones: `Booking.check_in < check_out` y `Booking.check_out > check_in`.
+
+**Por qué esto era un problema:** Con el filtro original, una reserva del 5 al 10 no bloqueaba una nueva reserva del 7 al 12 porque el check_in no era exactamente igual. Con las dos condiciones nuevas, cualquier solapamiento parcial o total queda correctamente detectado.
 
 ---
 
-### B5 — race condition con with_for_update()
+### B5 — Race condition con `with_for_update()`
 
-**¿Qué hice?** Agregué `.with_for_update()` a la query que busca reservas dentro de `find_available_room`
-**Por que?** si dos requests llegan al mismo tiempo ambos consumers pueden leer "no hay conflictos". Con `.with_for_update()` queda en espera hasta que el primero hace commit, y es cuando ya ve la habitación ocupada y rechaza la reserva.
+**Qué encontré:** Si dos requests llegaban al mismo tiempo, ambos consumers podían leer "no hay conflictos" antes de que cualquiera hiciera commit, y ambos confirmaban la misma habitación.
+
+**Cómo lo arreglé:** Agregué `.with_for_update()` a la query que busca reservas dentro de `find_available_room`.
+
+**Por qué esto era un problema:** Sin el bloqueo, la validación de disponibilidad no era atómica. Con `.with_for_update()`, el segundo request queda en espera hasta que el primero hace commit, y en ese momento ya ve la habitación ocupada y rechaza la reserva correctamente.
 
 ---
 
@@ -92,7 +99,7 @@ Usé una sola queue con dos bindings en lugar de dos queues separadas, porque am
 
 **Cómo lo arreglé:** Agregué una tabla `processed_events` con `event_id` como llave primaria. Antes de cobrar, el servicio intenta registrar el `event_id`; si ya existe, detecta duplicado, lo loggea y no hace el cobro.
 
-**Por qué esto era un problema:** Sin idempotencia, un redelivery puede generar doble cobro
+**Por qué esto era un problema:** Sin idempotencia, un redelivery puede generar doble cobro.
 
 **Comprobación:**
 
@@ -155,6 +162,8 @@ payment-service-1       | 2026-04-09 21:58:38,171 payment-service INFO Publicado
 payment-service-1       | 2026-04-09 21:58:38,176 payment-service INFO Publicado booking.cancelled para 6b9b1c09-f6d5-4014-bdb9-2900fbe7afd3
 ```
 
+---
+
 ### Tests
 
 **Qué probé:** La lógica de overlap de fechas con 6 casos distintos, y la función de compensación `apply_cancellation_compensation` con 2 casos.
@@ -174,6 +183,7 @@ payment-service-1       | 2026-04-09 21:58:38,176 payment-service INFO Publicado
 **Por qué esas funciones:** Son las dos funciones puras más críticas del sistema. El overlap es el corazón de la validación de disponibilidad, y la compensación es la pieza que garantiza consistencia cuando un pago falla. Si alguna de las dos falla silenciosamente, el sistema queda en un estado corrupto sin ningún error visible.
 
 **Cómo correr los tests:**
+
 ```bash
 cd availability-service
 pip install pytest
@@ -182,27 +192,26 @@ pytest tests/ -v
 
 **Resultado obtenido:**
 
+```text
 ================================================= test session starts =================================================
-platform win32 -- Python 3.13.1, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\emili\AppData\Local\Programs\Python\Python313\python.exe
-cachedir: .pytest_cache
-rootdir: C:\Users\emili\OneDrive\Escritorio\ExamenRafa2\parcial2-hotel-distribuido-2026-BernardoEmiliano\availability_service
-plugins: anyio-4.12.0, langsmith-0.4.32
+platform win32 -- Python 3.13.1, pytest-9.0.2, pluggy-1.6.0
 collected 8 items
 
-tests/test_availability.py::TestOverlapLogic::test_sin_solapamiento_consecutivo PASSED                           [ 12%]
-tests/test_availability.py::TestOverlapLogic::test_solapamiento_parcial_inicio PASSED                            [ 25%]
-tests/test_availability.py::TestOverlapLogic::test_solapamiento_parcial_fin PASSED                               [ 37%]
-tests/test_availability.py::TestOverlapLogic::test_solapamiento_contenido PASSED                                 [ 50%]
-tests/test_availability.py::TestOverlapLogic::test_mismo_rango_exacto PASSED                                     [ 62%]
-tests/test_availability.py::TestOverlapLogic::test_sin_solapamiento_antes PASSED                                 [ 75%]
-tests/test_availability.py::TestCancellationCompensation::test_cancela_reserva_confirmada PASSED                 [ 87%]
-tests/test_availability.py::TestCancellationCompensation::test_no_encuentra_reserva PASSED                       [100%]
+tests/test_availability.py::TestOverlapLogic::test_sin_solapamiento_consecutivo PASSED        [ 12%]
+tests/test_availability.py::TestOverlapLogic::test_solapamiento_parcial_inicio PASSED         [ 25%]
+tests/test_availability.py::TestOverlapLogic::test_solapamiento_parcial_fin PASSED            [ 37%]
+tests/test_availability.py::TestOverlapLogic::test_solapamiento_contenido PASSED              [ 50%]
+tests/test_availability.py::TestOverlapLogic::test_mismo_rango_exacto PASSED                  [ 62%]
+tests/test_availability.py::TestOverlapLogic::test_sin_solapamiento_antes PASSED              [ 75%]
+tests/test_availability.py::TestCancellationCompensation::test_cancela_reserva_confirmada PASSED [ 87%]
+tests/test_availability.py::TestCancellationCompensation::test_no_encuentra_reserva PASSED    [100%]
+```
 
 ---
 
 ## Cosas que decidí NO hacer
 
-Hicimos todo pero, podríamos hacer más detallados los test y más extensos pero nos faltó tiempo.
+Hicimos todo lo que pedía el examen. Los tests podrían ser más extensos y cubrir más casos edge, pero nos limitó el tiempo.
 
 ---
 
