@@ -202,12 +202,12 @@ tests/test_availability.py::TestCancellationCompensation::test_no_encuentra_rese
 
 ## Cosas que decidí NO hacer
 
-Hicimos todo pero, podriamos agregar mas detallados los test y mas extensos pero nos faltó tiempo.
+Hicimos todo pero, podríamos hacer más detallados los test y más extensos pero nos faltó tiempo.
 
 ---
 
 ## Si tuviera más tiempo, lo siguiente que mejoraría sería:
 
 - Un front que permita visualizar mejor las funciones
-- hacer los datos de las colas durables para producción
-- 
+- Hacer los datos de las colas durables para producción
+  
