@@ -1,0 +1,55 @@
+notification-service-1  | 2026-04-10 01:51:06,286 pika.adapters.utils.connection_workflow INFO Pika version 1.3.2 connecting to ('172.19.0.4', 5672)
+notification-service-1  | 2026-04-10 01:51:06,287 pika.adapters.utils.io_services_utils INFO Socket connected: <socket.socket fd=6, family=2, type=1, proto=6, laddr=('172.19.0.6', 41156), raddr=('172.19.0.4', 5672)>
+notification-service-1  | 2026-04-10 01:51:06,288 pika.adapters.utils.connection_workflow INFO Streaming transport linked up: (<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x7f2f50222d20>, _StreamingProtocolShim: <SelectConnection PROTOCOL transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x7f2f50222d20> params=<URLParameters host=rabbitmq port=5672 virtual_host=/ ssl=False>>).
+notification-service-1  | 2026-04-10 01:51:06,294 pika.adapters.utils.connection_workflow INFO AMQPConnector - reporting success: <SelectConnection OPEN transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x7f2f50222d20> params=<URLParameters host=rabbitmq port=5672 virtual_host=/ ssl=False>>
+notification-service-1  | 2026-04-10 01:51:06,294 pika.adapters.utils.connection_workflow INFO AMQPConnectionWorkflow - reporting success: <SelectConnection OPEN transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x7f2f50222d20> params=<URLParameters host=rabbitmq port=5672 virtual_host=/ ssl=False>>
+notification-service-1  | 2026-04-10 01:51:06,294 pika.adapters.blocking_connection INFO Connection workflow succeeded: <SelectConnection OPEN transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x7f2f50222d20> params=<URLParameters host=rabbitmq port=5672 virtual_host=/ ssl=False>>
+notification-service-1  | 2026-04-10 01:51:06,294 pika.adapters.blocking_connection INFO Created channel=1
+notification-service-1  | 2026-04-10 01:51:06,307 notification-service INFO notification-service esperando payment.completed / payment.failed...
+notification-service-1  | 2026-04-10 01:52:18,678 notification-service INFO [NOTIFICATION] booking_id=c916cd14-59d0-4d53-b0bc-ebdda65808db event=PAYMENT_COMPLETED guest=Evidencia channel=email status=SENT
+notification-service-1  | 2026-04-10 01:56:33,764 notification-service INFO [NOTIFICATION] booking_id=101ec932-6204-4e00-93de-78889800be66 event=PAYMENT_COMPLETED guest=Evidencia 2 channel=email status=SENT
+booking-api-1           | INFO:     Started server process [1]
+booking-api-1           | INFO:     Waiting for application startup.
+availability-service-1  | 2026-04-10 01:51:07,006 availability-service.db INFO Habitaciones iniciales insertadas: 5
+availability-service-1  | 2026-04-10 01:51:07,013 pika.adapters.utils.connection_workflow INFO Pika version 1.3.2 connecting to ('172.19.0.4', 5672)
+availability-service-1  | 2026-04-10 01:51:07,014 pika.adapters.utils.io_services_utils INFO Socket connected: <socket.socket fd=7, family=2, type=1, proto=6, laddr=('172.19.0.7', 34098), raddr=('172.19.0.4', 5672)>
+availability-service-1  | 2026-04-10 01:51:07,014 pika.adapters.utils.connection_workflow INFO Streaming transport linked up: (<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x7f113f1067e0>, _StreamingProtocolShim: <SelectConnection PROTOCOL transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x7f113f1067e0> params=<URLParameters host=rabbitmq port=5672 virtual_host=/ ssl=False>>).
+availability-service-1  | 2026-04-10 01:51:07,020 pika.adapters.utils.connection_workflow INFO AMQPConnector - reporting success: <SelectConnection OPEN transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x7f113f1067e0> params=<URLParameters host=rabbitmq port=5672 virtual_host=/ ssl=False>>
+availability-service-1  | 2026-04-10 01:51:07,020 pika.adapters.utils.connection_workflow INFO AMQPConnectionWorkflow - reporting success: <SelectConnection OPEN transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x7f113f1067e0> params=<URLParameters host=rabbitmq port=5672 virtual_host=/ ssl=False>>
+availability-service-1  | 2026-04-10 01:51:07,020 pika.adapters.blocking_connection INFO Connection workflow succeeded: <SelectConnection OPEN transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x7f113f1067e0> params=<URLParameters host=rabbitmq port=5672 virtual_host=/ ssl=False>>
+availability-service-1  | 2026-04-10 01:51:07,020 pika.adapters.blocking_connection INFO Created channel=1
+availability-service-1  | 2026-04-10 01:51:07,031 availability-service INFO availability-service esperando booking.requested / booking.cancelled...
+availability-service-1  | 2026-04-10 01:52:18,323 availability-service INFO Recibido booking.requested: c916cd14-59d0-4d53-b0bc-ebdda65808db
+availability-service-1  | 2026-04-10 01:52:18,388 availability-service INFO Reserva c916cd14-59d0-4d53-b0bc-ebdda65808db confirmada en habitación 201
+availability-service-1  | 2026-04-10 01:52:18,390 availability-service INFO Publicado booking.confirmed para c916cd14-59d0-4d53-b0bc-ebdda65808db
+availability-service-1  | 2026-04-10 01:56:33,313 availability-service INFO Recibido booking.requested: 101ec932-6204-4e00-93de-78889800be66
+availability-service-1  | 2026-04-10 01:56:33,325 availability-service INFO Reserva 101ec932-6204-4e00-93de-78889800be66 confirmada en habitación 101
+availability-service-1  | 2026-04-10 01:56:33,326 availability-service INFO Publicado booking.confirmed para 101ec932-6204-4e00-93de-78889800be66
+booking-api-1           | INFO:     Application startup complete.
+booking-api-1           | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+booking-api-1           | 2026-04-10 01:52:18,290 booking-api INFO Nueva reserva c916cd14-59d0-4d53-b0bc-ebdda65808db para Evidencia
+booking-api-1           | 2026-04-10 01:52:18,322 booking-api.publisher INFO Evento publicado: booking_id=c916cd14-59d0-4d53-b0bc-ebdda65808db
+booking-api-1           | INFO:     172.19.0.1:58278 - "POST /bookings HTTP/1.1" 202 Accepted
+booking-api-1           | 2026-04-10 01:56:33,295 booking-api INFO Nueva reserva 101ec932-6204-4e00-93de-78889800be66 para Evidencia 2
+booking-api-1           | 2026-04-10 01:56:33,313 booking-api.publisher INFO Evento publicado: booking_id=101ec932-6204-4e00-93de-78889800be66
+booking-api-1           | INFO:     172.19.0.1:60820 - "POST /bookings HTTP/1.1" 202 Accepted
+payment-service-1       | 2026-04-10 01:51:07,078 payment-service INFO payment-service esperando booking.confirmed...
+payment-service-1       | 2026-04-10 01:52:18,396 payment-service INFO Recibido booking.confirmed: c916cd14-59d0-4d53-b0bc-ebdda65808db
+payment-service-1       | 2026-04-10 01:52:18,660 payment-service INFO Pago COMPLETADO booking=c916cd14-59d0-4d53-b0bc-ebdda65808db monto=1500
+payment-service-1       | 2026-04-10 01:52:18,678 payment-service INFO Publicado payment.completed para c916cd14-59d0-4d53-b0bc-ebdda65808db
+payment-service-1       | 2026-04-10 01:56:33,327 payment-service INFO Recibido booking.confirmed: 101ec932-6204-4e00-93de-78889800be66
+payment-service-1       | 2026-04-10 01:56:33,748 payment-service INFO Pago COMPLETADO booking=101ec932-6204-4e00-93de-78889800be66 monto=800
+payment-service-1       | 2026-04-10 01:56:33,764 payment-service INFO Publicado payment.completed para 101ec932-6204-4e00-93de-78889800be66
+booking-api-1           | 2026-04-10 01:58:54,278 booking-api INFO Nueva reserva 68568efa-ae6a-4f57-b114-9a6029c5db56 para Evidencia 3
+booking-api-1           | 2026-04-10 01:58:54,303 booking-api.publisher INFO Evento publicado: booking_id=68568efa-ae6a-4f57-b114-9a6029c5db56
+availability-service-1  | 2026-04-10 01:58:54,304 availability-service INFO Recibido booking.requested: 68568efa-ae6a-4f57-b114-9a6029c5db56
+booking-api-1           | INFO:     172.19.0.1:64284 - "POST /bookings HTTP/1.1" 202 Accepted
+availability-service-1  | 2026-04-10 01:58:54,316 availability-service INFO Reserva 68568efa-ae6a-4f57-b114-9a6029c5db56 confirmada en habitación 301
+availability-service-1  | 2026-04-10 01:58:54,317 availability-service INFO Publicado booking.confirmed para 68568efa-ae6a-4f57-b114-9a6029c5db56
+payment-service-1       | 2026-04-10 01:58:54,320 payment-service INFO Recibido booking.confirmed: 68568efa-ae6a-4f57-b114-9a6029c5db56
+payment-service-1       | 2026-04-10 01:58:54,678 payment-service WARNING Pago FALLIDO booking=68568efa-ae6a-4f57-b114-9a6029c5db56 motivo=Tarjeta rechazada por el banco simulado
+payment-service-1       | 2026-04-10 01:58:54,690 payment-service INFO Publicado payment.failed para 68568efa-ae6a-4f57-b114-9a6029c5db56
+notification-service-1  | 2026-04-10 01:58:54,691 notification-service INFO [NOTIFICATION] booking_id=68568efa-ae6a-4f57-b114-9a6029c5db56 event=PAYMENT_FAILED guest=Evidencia 3 channel=email status=SENT
+payment-service-1       | 2026-04-10 01:58:54,692 payment-service INFO Publicado booking.cancelled para 68568efa-ae6a-4f57-b114-9a6029c5db56
+availability-service-1  | 2026-04-10 01:58:54,693 availability-service INFO Recibido booking.cancelled: 68568efa-ae6a-4f57-b114-9a6029c5db56
+availability-service-1  | 2026-04-10 01:58:54,705 availability-service INFO Reserva 68568efa-ae6a-4f57-b114-9a6029c5db56 marcada como CANCELLED

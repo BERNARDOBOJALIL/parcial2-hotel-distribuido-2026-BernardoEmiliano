@@ -1,0 +1,32 @@
+notification-service-1  | 2026-04-10 01:51:06,286 pika.adapters.utils.connection_workflow INFO Pika version 1.3.2 connecting to ('172.19.0.4', 5672)
+notification-service-1  | 2026-04-10 01:51:06,287 pika.adapters.utils.io_services_utils INFO Socket connected: <socket.socket fd=6, family=2, type=1, proto=6, laddr=('172.19.0.6', 41156), raddr=('172.19.0.4', 5672)>
+notification-service-1  | 2026-04-10 01:51:06,288 pika.adapters.utils.connection_workflow INFO Streaming transport linked up: (<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x7f2f50222d20>, _StreamingProtocolShim: <SelectConnection PROTOCOL transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x7f2f50222d20> params=<URLParameters host=rabbitmq port=5672 virtual_host=/ ssl=False>>).
+notification-service-1  | 2026-04-10 01:51:06,294 pika.adapters.utils.connection_workflow INFO AMQPConnector - reporting success: <SelectConnection OPEN transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x7f2f50222d20> params=<URLParameters host=rabbitmq port=5672 virtual_host=/ ssl=False>>
+notification-service-1  | 2026-04-10 01:51:06,294 pika.adapters.utils.connection_workflow INFO AMQPConnectionWorkflow - reporting success: <SelectConnection OPEN transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x7f2f50222d20> params=<URLParameters host=rabbitmq port=5672 virtual_host=/ ssl=False>>
+notification-service-1  | 2026-04-10 01:51:06,294 pika.adapters.blocking_connection INFO Connection workflow succeeded: <SelectConnection OPEN transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x7f2f50222d20> params=<URLParameters host=rabbitmq port=5672 virtual_host=/ ssl=False>>
+notification-service-1  | 2026-04-10 01:51:06,294 pika.adapters.blocking_connection INFO Created channel=1
+notification-service-1  | 2026-04-10 01:51:06,307 notification-service INFO notification-service esperando payment.completed / payment.failed...
+booking-api-1           | INFO:     Started server process [1]
+booking-api-1           | INFO:     Waiting for application startup.
+booking-api-1           | INFO:     Application startup complete.
+booking-api-1           | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+availability-service-1  | 2026-04-10 01:51:07,006 availability-service.db INFO Habitaciones iniciales insertadas: 5
+availability-service-1  | 2026-04-10 01:51:07,013 pika.adapters.utils.connection_workflow INFO Pika version 1.3.2 connecting to ('172.19.0.4', 5672)
+availability-service-1  | 2026-04-10 01:51:07,014 pika.adapters.utils.io_services_utils INFO Socket connected: <socket.socket fd=7, family=2, type=1, proto=6, laddr=('172.19.0.7', 34098), raddr=('172.19.0.4', 5672)>
+availability-service-1  | 2026-04-10 01:51:07,014 pika.adapters.utils.connection_workflow INFO Streaming transport linked up: (<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x7f113f1067e0>, _StreamingProtocolShim: <SelectConnection PROTOCOL transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x7f113f1067e0> params=<URLParameters host=rabbitmq port=5672 virtual_host=/ ssl=False>>).
+availability-service-1  | 2026-04-10 01:51:07,020 pika.adapters.utils.connection_workflow INFO AMQPConnector - reporting success: <SelectConnection OPEN transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x7f113f1067e0> params=<URLParameters host=rabbitmq port=5672 virtual_host=/ ssl=False>>
+availability-service-1  | 2026-04-10 01:51:07,020 pika.adapters.utils.connection_workflow INFO AMQPConnectionWorkflow - reporting success: <SelectConnection OPEN transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x7f113f1067e0> params=<URLParameters host=rabbitmq port=5672 virtual_host=/ ssl=False>>
+availability-service-1  | 2026-04-10 01:51:07,020 pika.adapters.blocking_connection INFO Connection workflow succeeded: <SelectConnection OPEN transport=<pika.adapters.utils.io_services_utils._AsyncPlaintextTransport object at 0x7f113f1067e0> params=<URLParameters host=rabbitmq port=5672 virtual_host=/ ssl=False>>
+availability-service-1  | 2026-04-10 01:51:07,020 pika.adapters.blocking_connection INFO Created channel=1
+availability-service-1  | 2026-04-10 01:51:07,031 availability-service INFO availability-service esperando booking.requested / booking.cancelled...
+payment-service-1       | 2026-04-10 01:51:07,078 payment-service INFO payment-service esperando booking.confirmed...
+booking-api-1           | 2026-04-10 01:52:18,290 booking-api INFO Nueva reserva c916cd14-59d0-4d53-b0bc-ebdda65808db para Evidencia
+booking-api-1           | 2026-04-10 01:52:18,322 booking-api.publisher INFO Evento publicado: booking_id=c916cd14-59d0-4d53-b0bc-ebdda65808db
+availability-service-1  | 2026-04-10 01:52:18,323 availability-service INFO Recibido booking.requested: c916cd14-59d0-4d53-b0bc-ebdda65808db
+booking-api-1           | INFO:     172.19.0.1:58278 - "POST /bookings HTTP/1.1" 202 Accepted
+availability-service-1  | 2026-04-10 01:52:18,388 availability-service INFO Reserva c916cd14-59d0-4d53-b0bc-ebdda65808db confirmada en habitación 201
+availability-service-1  | 2026-04-10 01:52:18,390 availability-service INFO Publicado booking.confirmed para c916cd14-59d0-4d53-b0bc-ebdda65808db
+payment-service-1       | 2026-04-10 01:52:18,396 payment-service INFO Recibido booking.confirmed: c916cd14-59d0-4d53-b0bc-ebdda65808db
+payment-service-1       | 2026-04-10 01:52:18,660 payment-service INFO Pago COMPLETADO booking=c916cd14-59d0-4d53-b0bc-ebdda65808db monto=1500
+payment-service-1       | 2026-04-10 01:52:18,678 payment-service INFO Publicado payment.completed para c916cd14-59d0-4d53-b0bc-ebdda65808db
+notification-service-1  | 2026-04-10 01:52:18,678 notification-service INFO [NOTIFICATION] booking_id=c916cd14-59d0-4d53-b0bc-ebdda65808db event=PAYMENT_COMPLETED guest=Evidencia channel=email status=SENT

@@ -11,4 +11,5 @@ venv/
 .idea/
 .vscode/
 *.log
+!evidence/*.log
 postgres_data/

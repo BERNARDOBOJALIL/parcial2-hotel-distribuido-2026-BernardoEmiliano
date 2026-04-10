@@ -50,7 +50,7 @@ services:
 
   # ── Validación y reservas (availability-service) ───────────
   availability-service:
-    build: ./availability-service
+    build: ./availability_service
     env_file: .env
     restart: on-failure
     depends_on:

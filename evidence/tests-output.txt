@@ -1,0 +1,11 @@
+plugins: anyio-4.12.0, langsmith-0.4.32
+collected 8 items
+
+tests/test_availability.py::TestOverlapLogic::test_sin_solapamiento_consecutivo PASSED                           [ 12%]
+tests/test_availability.py::TestOverlapLogic::test_solapamiento_parcial_inicio PASSED                            [ 25%]
+tests/test_availability.py::TestOverlapLogic::test_solapamiento_parcial_fin PASSED                               [ 37%]
+tests/test_availability.py::TestOverlapLogic::test_solapamiento_contenido PASSED                                 [ 50%]
+tests/test_availability.py::TestOverlapLogic::test_mismo_rango_exacto PASSED                                     [ 62%]
+tests/test_availability.py::TestOverlapLogic::test_sin_solapamiento_antes PASSED                                 [ 75%]
+tests/test_availability.py::TestCancellationCompensation::test_cancela_reserva_confirmada PASSED                 [ 87%]
+tests/test_availability.py::TestCancellationCompensation::test_no_encuentra_reserva PASSED                       [100%]
